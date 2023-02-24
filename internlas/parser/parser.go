@@ -40,25 +40,25 @@ func MapKeysToSlice(mapToParse map[string]any) []string {
 	for key := range mapToParse {
 		keysSlice = append(keysSlice, key)
 	}
-	sort.Sort(sort.StringSlice(keysSlice))
+	sort.Strings(keysSlice)
 	return keysSlice
 }
 
-// ParseSlicesToMap converts two slices into a map, usnig the elements of the
+// parseSlicesToMap converts two slices into a map, usnig the elements of the
 // first slice as keys and the elements of the second slice as values
 // For example, given:
 //
 // keys := []string{"name", "age", "country"}
 // values := []stirng{"Lucas", 22, "Argentina"}
-// ParseSlicesToMap(keys, values) would return:
+// parseSlicesToMap(keys, values) would return:
 //
 //	map[stirng]any{
 //		"name":"Lucas",
 //		"age":22,
 //		"country": "Lucas"
 //	}
-func ParseSlicesToMap(keys []string, values []any) map[string]any {
-	var response map[string]any
+func parseSlicesToMap(keys []string, values []any) map[string]any {
+	var response map[string]any = make(map[string]any)
 	for i := range keys {
 		response[keys[i]] = values[i]
 	}
