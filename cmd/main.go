@@ -15,19 +15,12 @@ func HomeHandler(responseWriter http.ResponseWriter, r *http.Request) {
 		responseWriter.WriteHeader(300)
 		fmt.Fprintln(responseWriter, "No pudo conextarse")
 	}
-	values := map[string]any{
-		"date":          "2023-12-06",
-		"payedAtMoment": true,
-		"amount":        12,
-		"userID":        1,
-		"product":       "besugo",
-		"caliberName":   "1-3kg",
-	}
-	err = db.InsertInto("sale", values)
+	res, err := db.Select("sale", []string{"date", "payedAtMoment"})
 	if err != nil {
 		responseWriter.WriteHeader(300)
 		fmt.Fprintln(responseWriter, err)
 	}
+	fmt.Fprintln(responseWriter, string(res))
 }
 func main() {
 	r := mux.NewRouter()
