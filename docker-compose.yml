@@ -1,0 +1,32 @@
+services:
+  auth-system:
+    depends_on: 
+      - mysql
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: auth-system
+    volumes:
+      - ./:/app/
+    hostname: auth-system
+    networks:
+      - main-net
+    ports:
+      - 8080:8080
+  mysql:
+    image: mysql:8.0.32
+    container_name: mysql
+    env_file: .env
+    networks:
+      - main-net
+    ports:
+      - 33306:3306
+    volumes:
+      - mysql:/var/lib/mysql 
+
+volumes:
+  mysql:
+
+networks:
+  main-net:
+    driver: bridge
