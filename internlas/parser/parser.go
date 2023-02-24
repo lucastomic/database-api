@@ -1,6 +1,8 @@
 package parser
 
-import "sort"
+import (
+	"sort"
+)
 
 // MapValuesToSlice converts the given map as parameter to a slice with all his values.
 // It is ordered with the order given in the slice passed as second parameter.
@@ -40,4 +42,25 @@ func MapKeysToSlice(mapToParse map[string]any) []string {
 	}
 	sort.Sort(sort.StringSlice(keysSlice))
 	return keysSlice
+}
+
+// ParseSlicesToMap converts two slices into a map, usnig the elements of the
+// first slice as keys and the elements of the second slice as values
+// For example, given:
+//
+// keys := []string{"name", "age", "country"}
+// values := []stirng{"Lucas", 22, "Argentina"}
+// ParseSlicesToMap(keys, values) would return:
+//
+//	map[stirng]any{
+//		"name":"Lucas",
+//		"age":22,
+//		"country": "Lucas"
+//	}
+func ParseSlicesToMap(keys []string, values []any) map[string]any {
+	var response map[string]any
+	for i := range keys {
+		response[keys[i]] = values[i]
+	}
+	return response
 }
