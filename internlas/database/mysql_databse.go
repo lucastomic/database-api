@@ -58,31 +58,33 @@ func (mysql MYSQLDB) InsertInto(table string, body map[string]any) error {
 	return nil
 }
 
-func (mysql MYSQLDB) Select(table string, columns []string) ([]byte, error) {
+// TODO:TERMINAR
+func (mysql MYSQLDB) Select(table string, columns []string) (string, error) {
 	var response []map[string]any
 
+	rows, err := mysql.getRows(table, columns)
+	response, err = parser.ParseRowsToSlice(rows)
+	if err != nil {
+		return "", err
+	}
+
+	parsedResponse, err := json.Marshal(response)
+	if err != nil {
+		return "", err
+	}
+	return string(parsedResponse), nil
+}
+
+// getRows retrive the rows from the table with the rows specified as argument
+// For example:
+// mysql.getRows("animal", []string{"legs", "fur"}) returns
+// the rows with the columns "legs" and "fur" from the table "animal"
+func (mysql MYSQLDB) getRows(table string, columns []string) (*sql.Rows, error) {
 	parsedColumns := parser.ColumnsFromSlice(columns)
 	query := fmt.Sprintf("SELECT %v FROM %v.%v", parsedColumns, databaseName, table)
 	rows, err := mysql.db.Query(query)
 	if err != nil {
-		return []byte{}, err
+		return nil, err
 	}
-
-	values := make([]any, len(columns))
-	for i := range values {
-		var v any
-		values[i] = &v
-	}
-
-	for rows.Next() {
-		err = rows.Scan(values...)
-		if err != nil {
-			return []byte{}, err
-		}
-
-		response = append(response, parser.ParseSlicesToMap(columns, values))
-
-	}
-	parsedResponse, err := json.Marshal(response)
-	return parsedResponse, nil
+	return rows, nil
 }
