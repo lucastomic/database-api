@@ -93,6 +93,8 @@ var insertIntoTestsRight = []struct {
 			"date":          "2022-11-18",
 			"payedAtMoment": true,
 			"amount":        12,
+			"userID":        1,
+			"product":       "Merluza",
 			"caliberName":   "1-3kg",
 		},
 	},
@@ -139,6 +141,8 @@ var insertIntoTestsWrong = []struct {
 }
 
 func TestInsertInto(t *testing.T) {
+	truncateAllTables()
+
 	db, err := connectTestingDB()
 	if err != nil {
 		t.Errorf("Error connecting to the database: %v", err)
@@ -162,5 +166,4 @@ func TestInsertInto(t *testing.T) {
 			}
 		})
 	}
-	truncateAllTables()
 }
