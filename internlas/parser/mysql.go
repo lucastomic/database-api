@@ -47,12 +47,11 @@ func MapValuesToQuestionMarks(mapToParse map[string]any) string {
 	return removeLastChar(questionMarks)
 }
 
-// TODO: Terminar documentacion (Hace falta releer)
-// parseToMYSQLType takes an interface{} (any) object which is underlying
+// parseFromMYSQLType takes an interface{} (any) object which is underlying
 // a *[]byte object, and parses it depending on the MYSQL type ("INT, VARCHAR, etc...")
 // passed as parameter in string format.
 // In case the function doesn't recognize the MYSQL Type, it parses it as string
-func parseToMYSQLType(value any, mysqlType string) any {
+func parseFromMYSQLType(value any, mysqlType string) any {
 	pointer := value.(*any)
 	byteSlice := (*pointer).([]byte)
 	strValue := string(byteSlice)
@@ -71,41 +70,69 @@ func parseToMYSQLType(value any, mysqlType string) any {
 	return response
 }
 
-// TODO: Terminar documentacion (Hace falta releer)
-// parseValuesToMYSQLType takes a slice of interface{} (any) objects wihch are underlying to *byte[]
+// parseValuesFromMYSQLType takes a slice of interface{} (any) objects wihch are underlying to *byte[]
 // objects but representing a string with another type ("12.32","2","realString"), and parse them
 // all to his respsective type acording to the columnTypes passed as arguments.
 //
 // This means, having an interface{} slice []any{a,b,c} where a,b and c are *[]byte objects that represents
 // each one to a different data type (for example 'a' is byte's slice pointer that represents a string, 'b' is a
-// byte's slice pointer which parsed to string represents a float ("12.32") and 'b' is a byte's slice pointer
+// byte's slice pointer which parsed to string represents a float ("12.32")
 // and 'c' is a byte's slice which parsed to string represents a bool ("1")) and given columnTypes like
-// ["VARCHAR", "DECIMAL", "TINYINT"]
-func parseValuesToMYSQLType(valuesToParse []any, columnTypes []*sql.ColumnType) []any {
+// ["VARCHAR", "DECIMAL", "TINYINT"] parseValuesFromMYSQLType(ourSlice, ourMYSQLTypes) would return
+// a slice with the next types: []any{string,float,bool}
+func parseValuesFromMYSQLType(valuesToParse []any, columnTypes []*sql.ColumnType) []any {
 	var parsedValues []any
 	for i, val := range valuesToParse {
 		mysqlType := columnTypes[i].DatabaseTypeName()
-		parsedVal := parseToMYSQLType(val, mysqlType)
+		parsedVal := parseFromMYSQLType(val, mysqlType)
 		parsedValues = append(parsedValues, parsedVal)
 	}
 	return parsedValues
 }
 
-// ParseRowsToSlice takes a *sql.Rows object and converts it into a slice of maps.
-// Every element of the array is underlying to his correct type
-func ParseRowsToSlice(rows *sql.Rows) ([]map[string]any, error) {
-	var response []map[string]any
-	columns, _ := rows.Columns()
+// getMapFromRow converts the current row from the rows passed as argument (with "the current row"
+// we refer to the row which will be retrived from the rows iterator) to a map.
+// If there is an error it retruns it as second value.
+func getMapFromRow(rows *sql.Rows) (map[string]any, error) {
+	columns, err := rows.Columns()
+	if err != nil {
+		return nil, err
+	}
 	values := getPointersSlice(len(columns))
+	err = rows.Scan(values...)
+	if err != nil {
+		return nil, err
+	}
+	columnTypes, _ := rows.ColumnTypes()
+	parsedValues := parseValuesFromMYSQLType(values, columnTypes)
+	return parseSlicesToMap(columns, parsedValues), nil
+}
 
+// ParseRowsToMapSlice takes a *sql.Rows object and converts it into a slice of maps,
+// where each row is a map element in the slice.
+// Every element of the map is underlying to his correct type
+// If there is an error retriving one of the lines, instead of this line (parsed to map)
+// it adds a map explaing the error:
+//
+//	{
+//		"message": "error retriving this row",
+//		"error":   err,
+//	}
+func ParseRowsToMapSlice(rows *sql.Rows) ([]map[string]any, error) {
+	if rows == nil {
+		return []map[string]any{}, nil
+	}
+	var response []map[string]any
 	for rows.Next() {
-		err := rows.Scan(values...)
-		if err != nil {
-			return nil, err
+		if newMap, err := getMapFromRow(rows); err != nil {
+			errorMessage := map[string]any{
+				"message": "error retriving this row",
+				"error":   err,
+			}
+			response = append(response, errorMessage)
+		} else {
+			response = append(response, newMap)
 		}
-		columnTypes, _ := rows.ColumnTypes()
-
-		response = append(response, parseSlicesToMap(columns, parsedValues))
 	}
 	return response, nil
 }
