@@ -58,20 +58,40 @@ func (mysql MYSQLDB) InsertInto(table string, body map[string]any) error {
 	return nil
 }
 
-// TODO:TERMINAR
+// Select brings the values from the table and columns specified as argumen in json format
+// For example,
+// mysql.Select("animal", []string{"legs", "mammal", "name"})
+// Could return something like this:
+// [
+//
+//		{
+//			name:"Dog"
+//			legs: 4,
+//			mammal: true
+//		},
+//	 	{
+//	 	name:"Snake",
+//			legs: 0,
+//			mammal: false
+//		},
+//
+// ]
 func (mysql MYSQLDB) Select(table string, columns []string) (string, error) {
 	var response []map[string]any
 
 	rows, err := mysql.getRows(table, columns)
-	response, err = parser.ParseRowsToSlice(rows)
 	if err != nil {
 		return "", err
 	}
-
+	response, err = parser.ParseRowsToMapSlice(rows)
+	if err != nil {
+		return "", err
+	}
 	parsedResponse, err := json.Marshal(response)
 	if err != nil {
 		return "", err
 	}
+
 	return string(parsedResponse), nil
 }
 
