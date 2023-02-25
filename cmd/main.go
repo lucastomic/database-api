@@ -10,7 +10,7 @@ import (
 )
 
 func HomeHandler(responseWriter http.ResponseWriter, r *http.Request) {
-	db, err := database.GetMYSQL()
+	db, err := database.GetMYSQLDB()
 	if err != nil {
 		responseWriter.WriteHeader(300)
 		fmt.Fprintln(responseWriter, "No pudo conextarse")
