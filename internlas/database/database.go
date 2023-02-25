@@ -30,4 +30,8 @@ type DatabaseInterface interface {
 	//Select("product", []string{"name"})
 	//returns the names of all the products
 	Select(table string, columns []string) (string, error)
+	// Ping verifies if the connection to the databse is still
+	// alive. It returns an error in case the databse is not alive
+	// and nill otherwise
+	Ping() error
 }
