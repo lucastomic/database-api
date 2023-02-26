@@ -116,12 +116,7 @@ func getMapFromRow(rows *sql.Rows) (map[string]any, error) {
 // where each row is a map element in the slice.
 // Every element of the map is underlying to his correct type
 // If there is an error retriving one of the lines, instead of this line (parsed to map)
-// it adds a map explaing the error:
-//
-//	{
-//		"message": "error retriving this row",
-//		"error":   err,
-//	}
+// it adds a map explaing the error.
 func ParseRowsToMapSlice(rows *sql.Rows) ([]map[string]any, error) {
 	if rows == nil {
 		return []map[string]any{}, nil
@@ -129,16 +124,26 @@ func ParseRowsToMapSlice(rows *sql.Rows) ([]map[string]any, error) {
 	var response []map[string]any
 	for rows.Next() {
 		if newMap, err := getMapFromRow(rows); err != nil {
-			errorMessage := map[string]any{
-				"message": "error retriving this row",
-				"error":   err,
-			}
+			errorMessage := getErrorMessageAsMap(err)
 			response = append(response, errorMessage)
 		} else {
 			response = append(response, newMap)
 		}
 	}
 	return response, nil
+}
+
+// getErrorMessageAsMap returns the error specified as arguemnt as a map with the next format:
+//
+//	{
+//		"message": "error retriving this row",
+//		"error":   err,
+//	}
+func getErrorMessageAsMap(err error) map[string]any {
+	return map[string]any{
+		"message": "error retriving this row",
+		"error":   err,
+	}
 }
 
 // getPointersSlice returns an already initialized slice of pointers ([]any whose all elements are pointers)
