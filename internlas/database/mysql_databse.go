@@ -72,6 +72,39 @@ func (mysql MYSQLDB) InsertInto(table string, body map[string]any) error {
 	return nil
 }
 
+// SelectWhere brings the values from the table and columns specified as argument which satisfy the where clauses.
+// It returns the rows in []map[string]any format
+// For example,
+// mysql.SelectWhere("animal", []string{"legs", "mammal", "name"}, "legs=4")
+// Could return something like this:
+//
+//	[]map[string]any{
+//		{
+//			name:"Dog"
+//			legs: 4,
+//			mammal: true
+//		},
+//		{
+//			name:"Cat",
+//			legs: 4,
+//			mammal: true
+//		},
+//	}
+func (mysql MYSQLDB) SelectWhere(table string, columns []string, where string) ([]map[string]any, error) {
+	var response []map[string]any
+
+	rows, err := mysql.getRows(table, columns, where)
+	if err != nil {
+		return nil, err
+	}
+	response, err = parser.ParseRowsToMapSlice(rows)
+	if err != nil {
+		return nil, err
+	}
+
+	return response, nil
+}
+
 // Select brings the values from the table and columns specified as argumen in []map[string]any format
 // For example,
 // mysql.Select("animal", []string{"legs", "mammal", "name"})
@@ -84,33 +117,27 @@ func (mysql MYSQLDB) InsertInto(table string, body map[string]any) error {
 //			mammal: true
 //		},
 //		{
+//			name:"Cat"
+//			legs: 4,
+//			mammal: true
+//		},
+//		{
 //			name:"Snake",
 //			legs: 0,
 //			mammal: false
 //		},
 //	}
 func (mysql MYSQLDB) Select(table string, columns []string) ([]map[string]any, error) {
-	var response []map[string]any
-
-	rows, err := mysql.getRows(table, columns)
-	if err != nil {
-		return nil, err
-	}
-	response, err = parser.ParseRowsToMapSlice(rows)
-	if err != nil {
-		return nil, err
-	}
-
-	return response, nil
+	return mysql.SelectWhere(table, columns, "TRUE")
 }
 
-// getRows retrive the rows from the table with the rows specified as argument
+// getRows retrive the rows with the columns from the table specified as argument, which satisfy the where clauses.
 // For example:
-// mysql.getRows("animal", []string{"legs", "fur"}) returns
-// the rows with the columns "legs" and "fur" from the table "animal"
-func (mysql MYSQLDB) getRows(table string, columns []string) (*sql.Rows, error) {
+// mysql.getRows("animal", []string{"legs", "fur"}, "legs<4") returns
+// the rows with the columns "legs" and "fur" from the table "animal" whose column "legs" is less than 4.
+func (mysql MYSQLDB) getRows(table string, columns []string, where string) (*sql.Rows, error) {
 	parsedColumns := parser.ColumnsFromSlice(columns)
-	query := fmt.Sprintf("SELECT %v FROM %v.%v", parsedColumns, databaseName, table)
+	query := fmt.Sprintf("SELECT %v FROM %v.%v WHERE %v", parsedColumns, databaseName, table, where)
 	rows, err := mysql.db.Query(query)
 	if err != nil {
 		return nil, err
