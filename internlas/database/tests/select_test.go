@@ -63,7 +63,7 @@ var insertRowsForSelectTesting = []struct {
 }
 
 // Set of tests for InsertInto function which should return no error
-var selectTestsRight = []struct {
+var selectTests = []struct {
 	table    string
 	columns  []string
 	expected []map[string]any
@@ -119,7 +119,7 @@ func TestSelect(t *testing.T) {
 		db.InsertInto(tt.table, tt.body)
 	}
 
-	for _, tt := range selectTestsRight {
+	for _, tt := range selectTests {
 		t.Run(tt.table, func(t *testing.T) {
 			// t.Parallel()
 			res, err := db.Select(tt.table, tt.columns)
