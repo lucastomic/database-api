@@ -2,7 +2,6 @@ package database
 
 import (
 	"database/sql"
-	"encoding/json"
 	"fmt"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -73,41 +72,36 @@ func (mysql MYSQLDB) InsertInto(table string, body map[string]any) error {
 	return nil
 }
 
-// Select brings the values from the table and columns specified as argumen in json format
+// Select brings the values from the table and columns specified as argumen in []map[string]any format
 // For example,
 // mysql.Select("animal", []string{"legs", "mammal", "name"})
 // Could return something like this:
-// [
 //
+//	[]map[string]any{
 //		{
 //			name:"Dog"
 //			legs: 4,
 //			mammal: true
 //		},
-//	 	{
-//	 	name:"Snake",
+//		{
+//			name:"Snake",
 //			legs: 0,
 //			mammal: false
 //		},
-//
-// ]
-func (mysql MYSQLDB) Select(table string, columns []string) (string, error) {
+//	}
+func (mysql MYSQLDB) Select(table string, columns []string) ([]map[string]any, error) {
 	var response []map[string]any
 
 	rows, err := mysql.getRows(table, columns)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	response, err = parser.ParseRowsToMapSlice(rows)
 	if err != nil {
-		return "", err
-	}
-	parsedResponse, err := json.Marshal(response)
-	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	return string(parsedResponse), nil
+	return response, nil
 }
 
 // getRows retrive the rows from the table with the rows specified as argument
