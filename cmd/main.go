@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -20,7 +21,12 @@ func HomeHandler(responseWriter http.ResponseWriter, r *http.Request) {
 		responseWriter.WriteHeader(300)
 		fmt.Fprintln(responseWriter, err)
 	}
-	fmt.Fprintln(responseWriter, string(res))
+	parsedRes, err := json.Marshal(res)
+	if err != nil {
+		responseWriter.WriteHeader(300)
+		fmt.Fprintln(responseWriter, err)
+	}
+	fmt.Fprintln(responseWriter, string(parsedRes))
 }
 func main() {
 	r := mux.NewRouter()
