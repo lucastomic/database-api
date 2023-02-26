@@ -52,7 +52,11 @@ func MapValuesToQuestionMarks(mapToParse map[string]any) string {
 // passed as parameter in string format.
 // In case the function doesn't recognize the MYSQL Type, it parses it as string
 func parseFromMYSQLType(value any, mysqlType string) any {
+
 	pointer := value.(*any)
+	if *pointer == nil {
+		return nil
+	}
 	byteSlice := (*pointer).([]byte)
 	strValue := string(byteSlice)
 	var response any
