@@ -2,6 +2,7 @@ package parser
 
 import (
 	"sort"
+	"strings"
 )
 
 // MapValuesToSlice converts the given map as parameter to a slice with all his values.
@@ -63,4 +64,31 @@ func parseSlicesToMap(keys []string, values []any) map[string]any {
 		response[keys[i]] = values[i]
 	}
 	return response
+}
+
+// SliceToString takes a slice and returns a string with his elements
+// in the next string format:
+// "key1,key2,...,keyN"
+// For example:
+//
+// var values = []string{"name", "country", "age"}
+// SliceToString(values) returns -> 'name,country,age'
+func SliceToString(slice []string) string {
+	var keysParsed string
+	for _, key := range slice {
+		keysParsed += key + ","
+	}
+	// We remove the last char here because this is an inconvenient comma (,)
+	// For example: "name,age,country(,)"
+	return removeLastChar(keysParsed)
+}
+
+// StringToSlice takes a string with the next froamt: "value1,value2,...,valueN" and converts
+// it into a slice like this: []stirng{"value1", "value2",...,"valueN"}
+// For example:
+//
+// str := "banana,apple,potato"
+// StringToSlice(str) -> []string{"banana", "apple", "potato"}
+func StringToSlice(str string) []string {
+	return strings.Split(str, ",")
 }
