@@ -103,6 +103,8 @@ func pingHandler(writer http.ResponseWriter, r *http.Request) {
 	}
 
 }
+
+// ListenAndServe raises the API server and configure all handlers.
 func ListenAndServe() {
 	r := mux.NewRouter()
 	r.HandleFunc("/ping", pingHandler)
