@@ -44,7 +44,7 @@ func GetMYSQLDBWithDB(db *sql.DB) (MYSQLDB, error) {
 // Ping returns checks whether the databse is still alive.
 // If it isn't it returns the error. If it is, it returns nil
 func (mysql MYSQLDB) Ping() error {
-	return mysql.Ping()
+	return mysql.db.Ping()
 }
 
 // InsertInto inserts a row in the table with values specified as arguments.
@@ -54,7 +54,7 @@ func (mysql MYSQLDB) Ping() error {
 // wouldn't correspond to the columns if we didn't oreder them.
 func (mysql MYSQLDB) InsertInto(table string, body map[string]any) error {
 	orderedColumns := parser.MapKeysToSlice(body)
-	columns := parser.ColumnsFromSlice(orderedColumns)
+	columns := parser.SliceToString(orderedColumns)
 	questionMarks := parser.MapValuesToQuestionMarks(body)
 	valuesSlice := parser.MapValuesToSlice(body, orderedColumns)
 
@@ -74,6 +74,7 @@ func (mysql MYSQLDB) InsertInto(table string, body map[string]any) error {
 
 // SelectWhere brings the values from the table and columns specified as argument which satisfy the where clauses.
 // It returns the rows in []map[string]any format
+// columns can be send in the format []string{"column1,column2,...,columnN"} or []string{"column1","column2",..."columnN"}
 // For example,
 // mysql.SelectWhere("animal", []string{"legs", "mammal", "name"}, "legs=4")
 // Could return something like this:
@@ -106,6 +107,7 @@ func (mysql MYSQLDB) SelectWhere(table string, columns []string, where string) (
 }
 
 // Select brings the values from the table and columns specified as argumen in []map[string]any format
+// columns can be send in the format []string{"column1,column2,...,columnN"} or []string{"column1","column2",..."columnN"}
 // For example,
 // mysql.Select("animal", []string{"legs", "mammal", "name"})
 // Could return something like this:
@@ -135,8 +137,9 @@ func (mysql MYSQLDB) Select(table string, columns []string) ([]map[string]any, e
 // For example:
 // mysql.getRows("animal", []string{"legs", "fur"}, "legs<4") returns
 // the rows with the columns "legs" and "fur" from the table "animal" whose column "legs" is less than 4.
+// columns also can be send in the format []string{"column1,column2,...,columnN"} instead of []string{"column1","column2",..."columnN"}
 func (mysql MYSQLDB) getRows(table string, columns []string, where string) (*sql.Rows, error) {
-	parsedColumns := parser.ColumnsFromSlice(columns)
+	parsedColumns := parser.SliceToString(columns)
 	query := fmt.Sprintf("SELECT %v FROM %v.%v WHERE %v", parsedColumns, databaseName, table, where)
 	rows, err := mysql.db.Query(query)
 	if err != nil {
