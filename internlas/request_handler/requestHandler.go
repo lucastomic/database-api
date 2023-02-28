@@ -10,6 +10,8 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/lucastomic/syn-auth/internlas/database"
+	"github.com/lucastomic/syn-auth/internlas/injector"
+	"github.com/lucastomic/syn-auth/internlas/parser"
 )
 
 // errorStatus is the status code returned when there is an error
@@ -37,17 +39,17 @@ func getColumns(request *http.Request) []string {
 // Only retrive the columns specified as argument.
 // If no columns are specified as query, it retrive all the columns.
 // If no where caluses are specified as query, it retrive all the rows of the table.
-// TODO:Currently, getRowsHandler only support one where clauses at time.
-func getRows(db database.MYSQLDB, request *http.Request, columns []string) ([]map[string]any, error) {
+func getRows(db database.Database, request *http.Request, columns []string) ([]map[string]any, error) {
 	var res []map[string]any
 	var err error
 	vars := mux.Vars(request)
 	whereClauses, hasWhereClauses := request.URL.Query()["where"]
 	if hasWhereClauses {
+		whereClausesParsed := parser.ParseWhereClauses(whereClauses)
 		res, err = db.SelectWhere(
 			vars["table"],
 			columns,
-			whereClauses[0], /*Should support more than one where clauses here*/
+			whereClausesParsed,
 		)
 	} else {
 		res, err = db.Select(vars["table"], columns)
@@ -64,24 +66,27 @@ func getRows(db database.MYSQLDB, request *http.Request, columns []string) ([]ma
 // If there is any error (connecting to database or making the request) it writes
 // it with the error status code
 // This method supports this kind of requests:
-// url/par/{table}[?columns=col1,col2,colN][&where=whereclause]
-// TODO:Should support url/par/{table}[?columns=col1,col2,colN][&where=whereclause][&where=whereclause][&where=whereclause]...
+// supports url/par/{table}[?columns=col1,col2,colN][&where=whereclause][&where=whereclause][&where=whereclause]...
 func getRowsHandler(writer http.ResponseWriter, r *http.Request) {
-	db, err := database.GetMYSQLDB()
+	db, err := injector.GetDatabase()
 	if err != nil {
 		writeError(writer, err)
+		return
 	}
 	columns := getColumns(r)
 	res, err := getRows(db, r, columns)
 
 	if err != nil {
 		writeError(writer, err)
+		return
 	}
 
 	parsedRes, err := json.Marshal(res)
 	if err != nil {
 		writeError(writer, err)
+		return
 	}
+	writer.WriteHeader(200)
 	fmt.Fprintln(writer, string(parsedRes))
 }
 
@@ -89,19 +94,48 @@ func getRowsHandler(writer http.ResponseWriter, r *http.Request) {
 // If it doesn't it returns the error with a 300 status code.
 // Otherwise, it returns a message exmplaning the datbase us currently active.
 func pingHandler(writer http.ResponseWriter, r *http.Request) {
-	db, err := database.GetMYSQLDB()
+	db, err := injector.GetDatabase()
 
 	if err != nil {
 		writeError(writer, err)
+		return
 	}
 	err = db.Ping()
 
 	if err != nil {
 		writeError(writer, err)
+		return
 	} else {
+		writer.WriteHeader(200)
 		fmt.Fprintln(writer, "Connected succesfully")
 	}
 
+}
+
+// insertIntoHandler manage the POST requests made for insert into operations.
+// Expects the table as a parameter in the URL and the columns and values in the request's body
+// Currently, only supports one row at time TODO: support more than one row at time
+// If there is an error it returns it with a error status code,
+// if there isn't returns a success message with a 200 status code
+func insertIntoHandler(writer http.ResponseWriter, r *http.Request) {
+	db, err := injector.GetDatabase()
+	table := mux.Vars(r)["table"]
+	if err != nil {
+		writeError(writer, err)
+		return
+	}
+	body, err := parser.ReqBodyToMap(r)
+	if err != nil {
+		writeError(writer, err)
+		return
+	}
+	err = db.InsertInto(table, body)
+	if err != nil {
+		writeError(writer, err)
+		return
+	}
+	writer.WriteHeader(200)
+	fmt.Fprintln(writer, "Inserted succesfully")
 }
 
 // ListenAndServe raises the API server and configure all handlers.
@@ -109,5 +143,6 @@ func ListenAndServe() {
 	r := mux.NewRouter()
 	r.HandleFunc("/ping", pingHandler)
 	r.HandleFunc("/get/{table}", getRowsHandler)
+	r.HandleFunc("/insert/{table}", insertIntoHandler).Methods("POST")
 	log.Fatal(http.ListenAndServe(":8080", r))
 }
