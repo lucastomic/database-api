@@ -99,6 +99,17 @@ var selectWhereTests = []struct {
 			{},
 		},
 	},
+	{
+		table:   "caliber",
+		columns: []string{"name", "amount"},
+		where:   "name = Merluza AND amount = 12",
+		expected: []map[string]any{
+			{
+				"name":   "4-6kg",
+				"amount": 12,
+			},
+		},
+	},
 }
 
 func TestSelectWhere(t *testing.T) {
