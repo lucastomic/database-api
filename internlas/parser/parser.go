@@ -1,3 +1,7 @@
+// parser package is the responsible of all parsing operations.
+// It's divided by files depending on his parsing topic. For example,
+// those parse function which are used for mysql type managment
+// (like parsing a string slice to a where-clauses string) are in parser/mysql.go
 package parser
 
 import (
