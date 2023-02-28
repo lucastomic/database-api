@@ -1,7 +1,10 @@
+// database is the package in charge of managing the databases stuff, such
+// as interfaces, concret DB implementatinos of the interface (fo example
+// the MYSQL implementation), SQL files and DB diagrams.
 package database
 
-// DatabseInterface is the parent struct for databse systems
-type DatabaseInterface interface {
+// Database is the parent struct for databse systems
+type Database interface {
 	// InsertInto into inserts a row into the database.
 	// In case of error, it returns it. Otherwise, returns nil.
 	// Expects the table name as first parameter and a map with the values as second parameter.
