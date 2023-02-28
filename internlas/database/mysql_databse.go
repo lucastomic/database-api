@@ -98,7 +98,7 @@ func (mysql MYSQLDB) SelectWhere(table string, columns []string, where string) (
 	if err != nil {
 		return nil, err
 	}
-	response, err = parser.ParseRowsToMapSlice(rows)
+	response, err = parser.RowsToMapSlice(rows)
 	if err != nil {
 		return nil, err
 	}
