@@ -95,12 +95,12 @@ func getMapFromRow(rows *sql.Rows) (map[string]any, error) {
 	return parseSlicesToMap(columns, parsedValues), nil
 }
 
-// ParseRowsToMapSlice takes a *sql.Rows object and converts it into a slice of maps,
+// RowsToMapSlice takes a *sql.Rows object and converts it into a slice of maps,
 // where each row is a map element in the slice.
 // Every element of the map is underlying to his correct type
 // If there is an error retriving one of the lines, instead of this line (parsed to map)
 // it adds a map explaing the error.
-func ParseRowsToMapSlice(rows *sql.Rows) ([]map[string]any, error) {
+func RowsToMapSlice(rows *sql.Rows) ([]map[string]any, error) {
 	if rows == nil {
 		return []map[string]any{}, nil
 	}
@@ -138,4 +138,18 @@ func getPointersSlice(length int) []any {
 		values[i] = &v
 	}
 	return values
+}
+
+// ParseWhereClauses takes a strings slice and parse them to the format: "clause1 AND clause2"
+// For example:
+// var whereClauses []string = []string{"legs<4", "mammal=true"}
+// ParseWhereClauses(whereClauses) ->
+// "legas<4 AND mammal= true"
+func ParseWhereClauses(whereClauses []string) string {
+	var response string
+	for i := 0; i < len(whereClauses)-2; i++ {
+		response += whereClauses[i] + " AND"
+	}
+	response += whereClauses[len(whereClauses)-1]
+	return response
 }
